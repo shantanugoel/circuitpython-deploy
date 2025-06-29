@@ -11,6 +11,10 @@ path = "src/main.rs"
 name = "test_ignore"
 path = "src/bin/test_ignore.rs"
 
+[[bin]]
+name = "test_multi_board"
+path = "src/bin/test_multi_board.rs"
+
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }
 ignore = "0.4.23"

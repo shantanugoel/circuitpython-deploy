@@ -6,13 +6,13 @@ pub enum CpdError {
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
 
-    #[error("Board not found. Please ensure your CircuitPython board is connected and mounted.")]
+    #[error("No CircuitPython boards detected.\n\nTroubleshooting:\n  • Ensure your CircuitPython board is connected via USB\n  • Check that the board appears as a removable drive\n  • Try pressing the RESET button on your board\n  • Use --board <path> to specify the board manually")]
     BoardNotFound,
 
-    #[error("Multiple boards detected. Please specify which board to use with --board option.")]
+    #[error("Multiple CircuitPython boards detected.\n\nPlease specify which board to use:\n  • Use --board <path> to specify manually, or\n  • Run without --yes flag for interactive selection")]
     MultipleBoardsFound,
 
-    #[error("Invalid board path: {path}")]
+    #[error("Invalid board path: {path}\n\nThe specified path does not exist or is not a valid CircuitPython board.\nUse --list-boards to see detected boards.")]
     InvalidBoardPath { path: String },
 
     #[error("Backup directory creation failed: {path}")]

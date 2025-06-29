@@ -1,0 +1,2 @@
+Adafruit CircuitPython 9.0.0 on 2024-03-20; Adafruit ESP32-S3 Feather with ESP32S3
+Board ID:adafruit_feather_esp32s3

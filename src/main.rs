@@ -136,22 +136,42 @@ fn run() -> Result<()> {
     // Display results
     println!("\n{}", result.summary());
     
+    if result.files_copied == 0 && result.files_failed == 0 {
+        println!("\n💡 No files to deploy. This could happen if:");
+        println!("   • All files are excluded by .cpdignore patterns");
+        println!("   • The project directory is empty");
+        println!("   • All files already exist and are unchanged");
+        println!("\nTip: Use --verbose --dry-run to see what files would be included.");
+    }
+    
     if !result.failed_files.is_empty() {
-        println!("\nFailed files:");
+        println!("\n❌ Failed files:");
         for (file, error) in &result.failed_files {
             println!("  {}: {}", file.display(), error);
         }
     }
     
-    if cli.verbose && !cli.dry_run {
-        println!("\nDeployment completed successfully!");
-        
-        // Show board space after deployment
-        if let Ok(boards) = detector.detect_boards() {
-            if let Some(updated_board) = boards.iter().find(|b| b.path == board.path) {
-                println!("Board space: {}", updated_board.format_space());
+    if !cli.dry_run {
+        if result.files_copied > 0 {
+            println!("\n✅ Deployment completed successfully!");
+            
+            if cli.verbose {
+                println!("📁 Files deployed:");
+                // We could track and show which files were deployed here
+                // For now, show general info
             }
+            
+            // Show board space after deployment
+            if let Ok(boards) = detector.detect_boards() {
+                if let Some(updated_board) = boards.iter().find(|b| b.path == board.path) {
+                    println!("💾 Board space: {}", updated_board.format_space());
+                }
+            }
+            
+            println!("\n🚀 Your CircuitPython project is ready to run!");
         }
+    } else {
+        println!("\n🔍 Dry run completed. Use the command without --dry-run to deploy.");
     }
     
     Ok(())

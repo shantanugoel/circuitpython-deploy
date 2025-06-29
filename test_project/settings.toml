@@ -1,0 +1,3 @@
+# CircuitPython settings
+CIRCUITPY_WIFI_SSID = "test-network"
+CIRCUITPY_WIFI_PASSWORD = "test-password"
