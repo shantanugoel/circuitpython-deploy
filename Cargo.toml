@@ -11,6 +11,25 @@ keywords = ["circuitpython", "deployment", "embedded", "microcontroller"]
 categories = ["command-line-utilities", "embedded", "development-tools"]
 authors = ["Shantanu Goel <shantanu@shantanugoel.com>"]
 readme = "README.md"
+include = [
+    "src/main.rs",
+    "src/lib.rs", 
+    "src/cli.rs",
+    "src/board.rs",
+    "src/file_ops.rs",
+    "src/ignore.rs",
+    "src/error.rs",
+    "tests/**/*",
+    "examples/**/*",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "deny.toml",
+    ".github/**/*"
+]
 
 [[bin]]
 name = "cpd"

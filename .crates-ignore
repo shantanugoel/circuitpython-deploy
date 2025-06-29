@@ -1,0 +1,16 @@
+# Exclude development and test files from crates.io package
+
+# Test projects and mock boards
+test_project/
+mock_board/
+mock_board2/
+
+# Development scripts and project files
+scripts/
+AGENT.md
+PROJECT_SUMMARY.md
+project.md
+
+# Test binaries (source files)
+src/bin/test_ignore.rs
+src/bin/test_multi_board.rs
