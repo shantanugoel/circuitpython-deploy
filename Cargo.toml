@@ -4,25 +4,17 @@ version = "0.1.0"
 edition = "2021"
 description = "Fast, reliable CircuitPython project deployment tool"
 license = "MIT"
-repository = "https://github.com/yourusername/circuitpython-deploy"
-homepage = "https://github.com/yourusername/circuitpython-deploy"
-documentation = "https://github.com/yourusername/circuitpython-deploy#readme"
+repository = "https://github.com/shantanugoel/circuitpython-deploy"
+homepage = "https://github.com/shantanugoel/circuitpython-deploy"
+documentation = "https://github.com/shantanugoel/circuitpython-deploy#readme"
 keywords = ["circuitpython", "deployment", "embedded", "microcontroller"]
 categories = ["command-line-utilities", "embedded", "development-tools"]
-authors = ["Your Name <your.email@example.com>"]
+authors = ["Shantanu Goel <shantanu@shantanugoel.com>"]
 readme = "README.md"
 
 [[bin]]
 name = "cpd"
 path = "src/main.rs"
-
-[[bin]]
-name = "test_ignore"
-path = "src/bin/test_ignore.rs"
-
-[[bin]]
-name = "test_multi_board"
-path = "src/bin/test_multi_board.rs"
 
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }
