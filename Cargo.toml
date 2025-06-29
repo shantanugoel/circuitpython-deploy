@@ -7,6 +7,10 @@ edition = "2024"
 name = "cpd"
 path = "src/main.rs"
 
+[[bin]]
+name = "test_ignore"
+path = "src/bin/test_ignore.rs"
+
 [dependencies]
 clap = { version = "4.5.40", features = ["derive"] }
 ignore = "0.4.23"

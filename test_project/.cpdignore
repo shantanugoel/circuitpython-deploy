@@ -3,7 +3,7 @@
 test_*
 
 # Ignore backup directories  
-backups/
+backups/*
 *.bak
 
 # Ignore development files
