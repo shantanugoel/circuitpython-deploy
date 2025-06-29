@@ -170,6 +170,7 @@ impl FileOperations {
     }
 
     /// Remove files that don't exist in source (for clean deployment)
+    #[allow(dead_code)]
     pub fn clean_destination(&self, source_dir: &Path, dest_dir: &Path, filter: &dyn Fn(&Path) -> bool) -> Result<()> {
         if !dest_dir.exists() {
             return Ok(());
@@ -215,6 +216,7 @@ pub struct CopyResult {
 }
 
 impl CopyResult {
+    #[allow(dead_code)]
     pub fn is_success(&self) -> bool {
         self.files_failed == 0
     }

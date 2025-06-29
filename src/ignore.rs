@@ -95,6 +95,7 @@ impl IgnoreFilter {
     }
     
     /// List all patterns that would be applied
+    #[allow(dead_code)]
     pub fn list_patterns(&self) -> Vec<String> {
         // This is a simplified version - the actual gitignore crate doesn't expose patterns directly
         // In a real implementation, you might want to store the patterns separately
@@ -109,6 +110,7 @@ impl IgnoreFilter {
 }
 
 /// Helper function to create a simple filter for testing
+#[allow(dead_code)]
 pub fn create_simple_filter(patterns: &[&str]) -> Result<impl Fn(&Path) -> bool> {
     let mut builder = GitignoreBuilder::new(".");
     

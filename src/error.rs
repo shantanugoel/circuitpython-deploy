@@ -28,12 +28,15 @@ pub enum CpdError {
     Configuration { message: String },
 
     #[error("Permission denied: {path}")]
+    #[allow(dead_code)]
     PermissionDenied { path: String },
 
     #[error("Disk full or insufficient space")]
+    #[allow(dead_code)]
     InsufficientSpace,
 
     #[error("Deployment was cancelled by user")]
+    #[allow(dead_code)]
     Cancelled,
 }
 

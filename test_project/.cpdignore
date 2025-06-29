@@ -1,0 +1,10 @@
+# Ignore test files
+*.test.py
+test_*
+
+# Ignore backup directories  
+backups/
+*.bak
+
+# Ignore development files
+dev_notes.txt

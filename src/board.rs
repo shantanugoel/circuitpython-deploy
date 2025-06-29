@@ -86,33 +86,62 @@ impl BoardDetector {
             return false;
         }
         
-        // Check for common CircuitPython indicators
-        let indicators = [
-            "boot_out.txt",
-            "code.py",
-            "main.py",
-            "lib",
-        ];
-        
-        let mut found_indicators = 0;
-        for indicator in &indicators {
-            let indicator_path = path.join(indicator);
-            if indicator_path.exists() {
-                found_indicators += 1;
-            }
-        }
-        
-        // Check for volume label (more reliable but not always available)
+        // Check for volume label first (most reliable)
         let volume_label = self.get_volume_label(path);
         let has_circuitpy_label = volume_label
             .as_ref()
             .map(|label| label.to_uppercase().contains("CIRCUITPY"))
             .unwrap_or(false);
         
+        if has_circuitpy_label {
+            return true;
+        }
+        
+        // Check for CircuitPython-specific files
+        let optional_files = ["code.py", "main.py", "lib"];
+        
+        // Must have boot_out.txt (created by CircuitPython on boot)
+        let has_boot_out = path.join("boot_out.txt").exists();
+        if !has_boot_out {
+            return false;
+        }
+        
+        // Count optional indicators
+        let mut found_optional = 0;
+        for file in &optional_files {
+            if path.join(file).exists() {
+                found_optional += 1;
+            }
+        }
+        
+        // Additional check: if boot_out.txt exists, check its content
+        if let Ok(content) = std::fs::read_to_string(path.join("boot_out.txt")) {
+            // CircuitPython boot_out.txt typically contains "CircuitPython" or "Adafruit"
+            let content_lower = content.to_lowercase();
+            if content_lower.contains("circuitpython") || content_lower.contains("adafruit") {
+                return true;
+            }
+        }
+        
+        // Check for other CircuitPython indicators
+        let cp_indicators = [
+            "CIRCUITPY.USB_VID",
+            "CIRCUITPY.USB_PID", 
+            "settings.toml",
+            ".fseventsd", // macOS creates this on CircuitPython drives
+        ];
+        
+        let mut found_cp_indicators = 0;
+        for indicator in &cp_indicators {
+            if path.join(indicator).exists() {
+                found_cp_indicators += 1;
+            }
+        }
+        
         // Consider it a CircuitPython board if:
-        // 1. Has CIRCUITPY volume label, OR
-        // 2. Has at least 2 CircuitPython indicators
-        has_circuitpy_label || found_indicators >= 2
+        // 1. Has boot_out.txt AND at least one optional file, OR
+        // 2. Has boot_out.txt AND at least one CP-specific indicator
+        has_boot_out && (found_optional >= 1 || found_cp_indicators >= 1)
     }
     
     /// Get the volume label for a mount point
@@ -137,7 +166,18 @@ impl BoardDetector {
         use std::os::windows::ffi::OsStrExt;
         use winapi::um::fileapi::GetVolumeInformationW;
         
-        let path_wide: Vec<u16> = OsStr::new(path)
+        // Get the root path for the volume (e.g., "C:\\" from "C:\Users\...")
+        let root_path = if let Some(root) = path.components().next() {
+            let mut root_str = root.as_os_str().to_string_lossy().to_string();
+            if !root_str.ends_with('\\') {
+                root_str.push('\\');
+            }
+            root_str
+        } else {
+            return None;
+        };
+        
+        let path_wide: Vec<u16> = OsStr::new(&root_path)
             .encode_wide()
             .chain(std::iter::once(0))
             .collect();
@@ -163,18 +203,78 @@ impl BoardDetector {
             if result != 0 {
                 let len = volume_name.iter().position(|&x| x == 0).unwrap_or(volume_name.len());
                 if len > 0 {
-                    return String::from_utf16(&volume_name[..len]).ok();
+                    let label = String::from_utf16(&volume_name[..len]).ok()?;
+                    if !label.trim().is_empty() {
+                        return Some(label.trim().to_string());
+                    }
                 }
             }
         }
         
+        // Fallback: try to get volume label from disk info in sysinfo
+        self.get_volume_label_from_sysinfo(path)
+    }
+    
+    #[cfg(unix)]
+    fn get_unix_volume_label(&self, path: &Path) -> Option<String> {
+        // On Unix systems, try multiple approaches to get volume label
+        
+        // 1. Try to read from mount info
+        if let Some(label) = self.get_unix_label_from_mounts(path) {
+            return Some(label);
+        }
+        
+        // 2. Try blkid command (if available)
+        if let Some(label) = self.get_unix_label_from_blkid(path) {
+            return Some(label);
+        }
+        
+        // 3. Fallback to sysinfo
+        self.get_volume_label_from_sysinfo(path)
+    }
+    
+    #[cfg(unix)]
+    fn get_unix_label_from_mounts(&self, path: &Path) -> Option<String> {
+        use std::fs;
+        
+        // Read /proc/mounts to find the mount point and device
+        if let Ok(mounts) = fs::read_to_string("/proc/mounts") {
+            for line in mounts.lines() {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    let mount_point = parts[1];
+                    if path.starts_with(mount_point) {
+                        // Found the mount point, try to extract label from device name
+                        let device = parts[0];
+                        if device.contains("CIRCUITPY") {
+                            return Some("CIRCUITPY".to_string());
+                        }
+                    }
+                }
+            }
+        }
         None
     }
     
     #[cfg(unix)]
-    fn get_unix_volume_label(&self, _path: &Path) -> Option<String> {
-        // On Unix systems, we can try to read from /proc/mounts or use system commands
-        // For now, return None as a placeholder
+    fn get_unix_label_from_blkid(&self, _path: &Path) -> Option<String> {
+        // This would require executing blkid command
+        // For now, we'll skip this to avoid complexity
+        None
+    }
+    
+    /// Fallback method to get volume label from sysinfo (works on all platforms)
+    fn get_volume_label_from_sysinfo(&self, path: &Path) -> Option<String> {
+        let disks = Disks::new_with_refreshed_list();
+        
+        for disk in &disks {
+            if disk.mount_point() == path {
+                let name = disk.name().to_string_lossy();
+                if !name.is_empty() && name != "Unknown" {
+                    return Some(name.to_string());
+                }
+            }
+        }
         None
     }
     
