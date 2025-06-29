@@ -3,4 +3,23 @@ name = "circuitpython-deploy"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "cpd"
+path = "src/main.rs"
+
 [dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
+ignore = "0.4.23"
+indicatif = "0.17.11"
+sysinfo = "0.35.2"
+walkdir = "2.5.0"
+anyhow = "1.0"
+thiserror = "1.0"
+filetime = "0.2"
+tempfile = "3.0"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["fileapi", "handleapi", "winbase", "winnt"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
