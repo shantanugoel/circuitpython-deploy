@@ -4,38 +4,52 @@ use std::path::PathBuf;
 #[derive(Parser, Debug)]
 #[command(name = "cpd")]
 #[command(version = "0.1.0")]
-#[command(about = "Deploy CircuitPython projects to boards")]
-#[command(long_about = "A command-line tool for deploying CircuitPython projects from local development environment to CircuitPython boards. Supports automatic board detection, .cpdignore files, and backup functionality.")]
+#[command(about = "Fast, reliable CircuitPython project deployment")]
+#[command(long_about = "A command-line tool for deploying CircuitPython projects from your development environment to CircuitPython boards.
+
+Features:
+  • Automatic board detection and smart file filtering
+  • .cpdignore support with gitignore-style patterns  
+  • Backup functionality with progress tracking
+  • Cross-platform support (Windows, macOS, Linux)
+  • High-performance deployment with visual feedback
+
+Examples:
+  cpd                           Deploy current directory to auto-detected board
+  cpd --list-boards            Show all detected CircuitPython boards
+  cpd --dry-run                Preview deployment without copying files
+  cpd --backup ./backup        Create backup before deployment
+  cpd --board /media/CIRCUITPY  Deploy to specific board path")]
 pub struct Cli {
     /// Path to the project directory to deploy (defaults to current directory)
     #[arg(value_name = "PROJECT_DIR")]
     pub project_dir: Option<PathBuf>,
 
-    /// Specify the board drive/mount point manually
+    /// Specify the board drive/mount point manually (e.g., E:\, /media/CIRCUITPY)
     #[arg(short = 'b', long = "board", value_name = "BOARD_PATH")]
     pub board_path: Option<PathBuf>,
 
-    /// Backup existing board files to specified directory before deployment
+    /// Backup existing board files before deployment
     #[arg(short = 'B', long = "backup", value_name = "BACKUP_DIR")]
     pub backup_dir: Option<PathBuf>,
 
-    /// Show what would be deployed without actually copying files
+    /// Preview deployment without copying files (safe mode)
     #[arg(short = 'n', long = "dry-run")]
     pub dry_run: bool,
 
-    /// Enable verbose output
+    /// Show detailed information during deployment
     #[arg(short = 'v', long = "verbose")]
     pub verbose: bool,
 
-    /// Force deployment even if board contains different project
+    /// Force deployment even if board validation fails
     #[arg(short = 'f', long = "force")]
     pub force: bool,
 
-    /// Skip confirmation prompts
+    /// Skip interactive confirmation prompts
     #[arg(short = 'y', long = "yes")]
     pub assume_yes: bool,
 
-    /// List available CircuitPython boards and exit
+    /// List all detected CircuitPython boards and exit
     #[arg(short = 'l', long = "list-boards")]
     pub list_boards: bool,
 }

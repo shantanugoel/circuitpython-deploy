@@ -1,7 +1,16 @@
 [package]
 name = "circuitpython-deploy"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
+description = "Fast, reliable CircuitPython project deployment tool"
+license = "MIT"
+repository = "https://github.com/yourusername/circuitpython-deploy"
+homepage = "https://github.com/yourusername/circuitpython-deploy"
+documentation = "https://github.com/yourusername/circuitpython-deploy#readme"
+keywords = ["circuitpython", "deployment", "embedded", "microcontroller"]
+categories = ["command-line-utilities", "embedded", "development-tools"]
+authors = ["Your Name <your.email@example.com>"]
+readme = "README.md"
 
 [[bin]]
 name = "cpd"

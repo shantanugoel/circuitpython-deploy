@@ -1,0 +1,17 @@
+# Basic .cpdignore for LED blink example
+
+# Development files
+*.test.py
+test_*
+docs/
+
+# IDE files
+.vscode/
+.idea/
+
+# Backup files
+*.bak
+*.tmp
+
+# Documentation (this project is simple enough)
+README.md

@@ -1,0 +1,56 @@
+# Sensor Dashboard .cpdignore
+# Excludes development and documentation files
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Development files
+test_*
+*_test.py
+*.test.py
+examples/
+demo/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python development artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+coverage.xml
+
+# Backup and temporary files
+backups/
+*.bak
+*.tmp
+*.log
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+.Trash-*
+.fseventsd/
+
+# Circuit design files
+*.sch
+*.brd
+*.fzz
+schematics/
+
+# Large assets not needed on device
+assets/raw/
+assets/*.psd
+assets/*.ai
+
+# Version control
+.git/
+.gitignore
+.gitattributes
