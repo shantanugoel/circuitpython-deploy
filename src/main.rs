@@ -82,14 +82,20 @@ fn run() -> Result<()> {
         println!("Target board: {} at {}", board.display_name(), board.path.display());
     }
     
-    // Create backup if requested
+    // Create backup if requested (skip in dry-run mode)
     if let Some(backup_dir) = &cli.backup_dir {
-        if cli.verbose {
-            println!("Creating backup at: {}", backup_dir.display());
+        if cli.dry_run {
+            if cli.verbose {
+                println!("Would create backup at: {}", backup_dir.display());
+            }
+        } else {
+            if cli.verbose {
+                println!("Creating backup at: {}", backup_dir.display());
+            }
+            
+            let file_ops = FileOperations::new(cli.verbose);
+            file_ops.create_backup(&board.path, backup_dir)?;
         }
-        
-        let file_ops = FileOperations::new(cli.verbose);
-        file_ops.create_backup(&board.path, backup_dir)?;
     }
     
     // Show deployment plan
@@ -97,6 +103,14 @@ fn run() -> Result<()> {
         println!("\nDeployment plan:");
         println!("  Source: {}", project_dir.display());
         println!("  Target: {}", board.path.display());
+        
+        if let Some(backup_dir) = &cli.backup_dir {
+            if cli.dry_run {
+                println!("  Backup: Would backup to {}", backup_dir.display());
+            } else {
+                println!("  Backup: Created at {}", backup_dir.display());
+            }
+        }
         
         if cli.dry_run {
             println!("  Mode: DRY RUN (no files will be copied)");

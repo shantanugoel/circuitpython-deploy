@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(name = "cpd")]
-#[command(version = "0.1.0")]
+#[command(version)]
 #[command(about = "Fast, reliable CircuitPython project deployment")]
 #[command(long_about = "A command-line tool for deploying CircuitPython projects from your development environment to CircuitPython boards.
 
