@@ -1,7 +1,9 @@
 # CircuitPython Deploy (cpd)
 
+[![CI](https://github.com/yourusername/circuitpython-deploy/workflows/CI/badge.svg)](https://github.com/yourusername/circuitpython-deploy/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.75%2B-blue.svg)](https://www.rust-lang.org)
+[![Crates.io](https://img.shields.io/crates/v/circuitpython-deploy.svg)](https://crates.io/crates/circuitpython-deploy)
 
 A fast, reliable command-line tool for deploying CircuitPython projects from your development environment to CircuitPython boards.
 
@@ -53,6 +55,12 @@ cd circuitpython-deploy
 cargo build --release
 
 # The binary will be at target/release/cpd
+```
+
+### Cargo
+
+```bash
+cargo install circuitpython-deploy
 ```
 
 ### Package Managers
@@ -230,6 +238,24 @@ cargo test --test integration_test
 
 # Build release
 cargo build --release
+
+# Validate GitHub workflows
+./scripts/validate-workflows.sh
+```
+
+### GitHub Actions
+
+This project uses GitHub Actions for:
+
+- **Continuous Integration**: Automatically builds and tests on push to main
+- **Release Automation**: Creates releases with cross-platform binaries when tags are pushed
+- **Dependency Updates**: Weekly security audits and dependency updates
+- **Code Quality**: Formatting, linting, and security checks
+
+To trigger a release:
+```bash
+git tag v0.1.0
+git push origin v0.1.0
 ```
 
 ## 📋 Requirements

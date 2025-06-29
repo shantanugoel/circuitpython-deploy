@@ -1,0 +1,204 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_version: ${{ env.RELEASE_VERSION }}
+    steps:
+    - name: Get the release version from the tag
+      shell: bash
+      if: env.RELEASE_VERSION == ''
+      run: |
+        echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        echo "version is: ${GITHUB_REF#refs/tags/}"
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.RELEASE_VERSION }}
+        release_name: CircuitPython Deploy ${{ env.RELEASE_VERSION }}
+        body: |
+          ## Changes in ${{ env.RELEASE_VERSION }}
+          
+          🚀 **CircuitPython Deploy** - Fast, reliable CircuitPython project deployment
+          
+          ### Download
+          
+          Choose the appropriate binary for your platform:
+          - **Windows**: `circuitpython-deploy-${{ env.RELEASE_VERSION }}-windows-x86_64.zip`
+          - **macOS**: `circuitpython-deploy-${{ env.RELEASE_VERSION }}-macos-x86_64.tar.gz`
+          - **Linux**: `circuitpython-deploy-${{ env.RELEASE_VERSION }}-linux-x86_64.tar.gz`
+          
+          ### Features
+          
+          - 🔍 Automatic CircuitPython board detection
+          - 📁 Smart file filtering with .cpdignore support
+          - 💾 Backup functionality with progress tracking
+          - 🚀 High-performance deployment
+          - 🔧 Cross-platform support
+          
+          ### Quick Start
+          
+          ```bash
+          # Extract the archive for your platform
+          # Then run:
+          cpd --help
+          cpd --list-boards
+          cpd --dry-run
+          ```
+          
+          ### Full Documentation
+          
+          See the included README.md or visit the [repository](https://github.com/yourusername/circuitpython-deploy) for complete documentation and examples.
+          
+          ---
+          
+          See [CHANGELOG.md](https://github.com/yourusername/circuitpython-deploy/blob/main/CHANGELOG.md) for detailed changes.
+        draft: false
+        prerelease: false
+
+  build-release:
+    name: Build Release Assets
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux, macos, windows]
+        include:
+        - build: linux
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-gnu
+          archive-name: circuitpython-deploy-${{ needs.create-release.outputs.release_version }}-linux-x86_64.tar.gz
+        - build: macos
+          os: macos-latest
+          rust: stable
+          target: x86_64-apple-darwin
+          archive-name: circuitpython-deploy-${{ needs.create-release.outputs.release_version }}-macos-x86_64.tar.gz
+        - build: windows
+          os: windows-latest
+          rust: stable
+          target: x86_64-pc-windows-msvc
+          archive-name: circuitpython-deploy-${{ needs.create-release.outputs.release_version }}-windows-x86_64.zip
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ matrix.rust }}
+        target: ${{ matrix.target }}
+
+    - name: Cache cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build release binary
+      run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Strip binary (linux and macos only)
+      if: matrix.build == 'linux' || matrix.build == 'macos'
+      run: strip "target/${{ matrix.target }}/release/cpd"
+
+    - name: Build archive (Windows)
+      shell: bash
+      if: matrix.build == 'windows'
+      run: |
+        mkdir dist
+        cp "target/${{ matrix.target }}/release/cpd.exe" dist/
+        cp README.md LICENSE CHANGELOG.md dist/
+        cp -r examples dist/
+        cd dist
+        7z a "../${{ matrix.archive-name }}" .
+        cd ..
+        echo "ASSET=${{ matrix.archive-name }}" >> $GITHUB_ENV
+
+    - name: Build archive (Unix)
+      shell: bash
+      if: matrix.build != 'windows'
+      run: |
+        mkdir dist
+        cp "target/${{ matrix.target }}/release/cpd" dist/
+        cp README.md LICENSE CHANGELOG.md dist/
+        cp -r examples dist/
+        cd dist
+        tar czf "../${{ matrix.archive-name }}" .
+        cd ..
+        echo "ASSET=${{ matrix.archive-name }}" >> $GITHUB_ENV
+
+    - name: Upload release asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ needs.create-release.outputs.upload_url }}
+        asset_path: ./${{ env.ASSET }}
+        asset_name: ${{ env.ASSET }}
+        asset_content_type: application/octet-stream
+
+  # Publish to crates.io (optional, only on stable releases)
+  publish-crate:
+    name: Publish to crates.io
+    needs: [create-release, build-release]
+    runs-on: ubuntu-latest
+    if: "!contains(needs.create-release.outputs.release_version, 'alpha') && !contains(needs.create-release.outputs.release_version, 'beta') && !contains(needs.create-release.outputs.release_version, 'rc')"
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Publish to crates.io
+      env:
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      run: cargo publish
+
+  # Create Homebrew formula (future enhancement)
+  homebrew-formula:
+    name: Update Homebrew Formula
+    needs: [create-release, build-release]
+    runs-on: ubuntu-latest
+    if: "!contains(needs.create-release.outputs.release_version, 'alpha') && !contains(needs.create-release.outputs.release_version, 'beta') && !contains(needs.create-release.outputs.release_version, 'rc')"
+    steps:
+    - name: Extract version
+      shell: bash
+      run: |
+        echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+    - name: Update Homebrew formula
+      uses: mislav/bump-homebrew-formula-action@v2
+      if: "!contains(github.ref, '-')" # only for stable releases, not pre-releases
+      with:
+        formula-name: circuitpython-deploy
+        homebrew-tap: yourusername/homebrew-tap
+        base-branch: main
+        download-url: https://github.com/yourusername/circuitpython-deploy/releases/download/${{ needs.create-release.outputs.release_version }}/circuitpython-deploy-${{ needs.create-release.outputs.release_version }}-macos-x86_64.tar.gz
+      env:
+        COMMITTER_TOKEN: ${{ secrets.COMMITTER_TOKEN }}
