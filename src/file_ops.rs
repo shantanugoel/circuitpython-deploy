@@ -168,6 +168,97 @@ impl FileOperations {
 
         Ok(())
     }
+    
+    /// Copy specific files from source to destination (for incremental sync)
+    pub fn copy_specific_files(
+        &self,
+        files_to_copy: &[PathBuf],
+        from_dir: &Path,
+        to_dir: &Path,
+        dry_run: bool,
+    ) -> Result<CopyResult> {
+        if files_to_copy.is_empty() {
+            return Ok(CopyResult {
+                files_copied: 0,
+                files_failed: 0,
+                bytes_copied: 0,
+                failed_files: Vec::new(),
+            });
+        }
+        
+        // Show progress if verbose or if we have many files
+        let progress = if self.verbose || files_to_copy.len() > 5 {
+            let pb = ProgressBar::new(files_to_copy.len() as u64);
+            pb.set_style(
+                ProgressStyle::default_bar()
+                    .template("[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}")
+                    .unwrap()
+                    .progress_chars("##-"),
+            );
+            Some(pb)
+        } else {
+            None
+        };
+
+        let mut result = CopyResult {
+            files_copied: 0,
+            files_failed: 0,
+            bytes_copied: 0,
+            failed_files: Vec::new(),
+        };
+
+        // Copy each specified file
+        for file_path in files_to_copy {
+            let relative_path = file_path.strip_prefix(from_dir).map_err(|_| CpdError::InvalidPath {
+                path: file_path.clone(),
+                reason: "Could not make path relative to source directory".to_string(),
+            })?;
+            let dest_path = to_dir.join(relative_path);
+
+            if let Some(pb) = &progress {
+                pb.set_message(format!("Copying {}", relative_path.display()));
+            }
+
+            if dry_run {
+                println!("Would copy: {} -> {}", file_path.display(), dest_path.display());
+                result.files_copied += 1;
+            } else {
+                match self.copy_file(file_path, &dest_path) {
+                    Ok(_) => {
+                        result.files_copied += 1;
+                        if let Ok(metadata) = fs::metadata(file_path) {
+                            result.bytes_copied += metadata.len();
+                        }
+                        if self.verbose {
+                            println!("Copied: {}", relative_path.display());
+                        }
+                    }
+                    Err(e) => {
+                        result.files_failed += 1;
+                        result.failed_files.push((file_path.clone(), e.to_string()));
+                        
+                        // Continue with other files if error is recoverable
+                        if !e.is_recoverable() {
+                            if let Some(pb) = &progress {
+                                pb.finish_with_message("Deployment failed");
+                            }
+                            return Err(e);
+                        }
+                    }
+                }
+            }
+
+            if let Some(pb) = &progress {
+                pb.inc(1);
+            }
+        }
+
+        if let Some(pb) = &progress {
+            pb.finish_with_message("Incremental deployment completed");
+        }
+
+        Ok(result)
+    }
 
     /// Remove files that don't exist in source (for clean deployment)
     #[allow(dead_code)]

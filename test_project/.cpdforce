@@ -1,0 +1,4 @@
+# Force include files that would normally be ignored
+.gitignore
+settings.toml
+*.env

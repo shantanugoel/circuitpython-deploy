@@ -38,6 +38,16 @@ pub enum CpdError {
     #[error("Deployment was cancelled by user")]
     #[allow(dead_code)]
     Cancelled,
+    
+    #[error("Invalid path: {path}. {reason}")]
+    InvalidPath { path: std::path::PathBuf, reason: String },
+    
+    #[error("IO error for {path}: {source}")]
+    IoError {
+        path: std::path::PathBuf,
+        #[source]
+        source: io::Error,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, CpdError>;
@@ -56,6 +66,8 @@ impl CpdError {
             CpdError::PermissionDenied { .. } => true,
             CpdError::InsufficientSpace => false,
             CpdError::Cancelled => false,
+            CpdError::InvalidPath { .. } => false,
+            CpdError::IoError { .. } => true,
         }
     }
 }

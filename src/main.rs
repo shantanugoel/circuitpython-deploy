@@ -3,6 +3,7 @@ mod error;
 mod file_ops;
 mod ignore;
 mod board;
+mod sync;
 
 use cli::Cli;
 use error::{CpdError, Result};
@@ -140,12 +141,51 @@ fn run() -> Result<()> {
     let file_ops = FileOperations::new(cli.verbose);
     let filter_fn = ignore_filter.filter_fn();
     
-    let result = file_ops.copy_directory_contents(
-        &project_dir,
-        &board.path,
-        &filter_fn,
-        cli.dry_run,
-    )?;
+    let result = if cli.incremental {
+        // Use incremental sync - only copy changed files
+        if cli.verbose || cli.dry_run {
+            println!("Using incremental sync (only changed files will be copied)");
+        }
+        
+        let changed_files = sync::has_changes(&project_dir, &board.path, &filter_fn)?;
+        
+        if cli.verbose || cli.dry_run {
+            println!("Found {} changed files", changed_files.len());
+            if cli.verbose && !changed_files.is_empty() {
+                println!("Changed files:");
+                for file in &changed_files {
+                    let relative = file.strip_prefix(&project_dir).unwrap_or(file);
+                    println!("  {}", relative.display());
+                }
+                println!();
+            }
+        }
+        
+        if changed_files.is_empty() {
+            println!("No files have changed. Nothing to deploy.");
+            file_ops::CopyResult {
+                files_copied: 0,
+                files_failed: 0,
+                bytes_copied: 0,
+                failed_files: Vec::new(),
+            }
+        } else {
+            file_ops.copy_specific_files(
+                &changed_files,
+                &project_dir,
+                &board.path,
+                cli.dry_run,
+            )?
+        }
+    } else {
+        // Use full deployment
+        file_ops.copy_directory_contents(
+            &project_dir,
+            &board.path,
+            &filter_fn,
+            cli.dry_run,
+        )?
+    };
     
     // Display results
     println!("\n{}", result.summary());

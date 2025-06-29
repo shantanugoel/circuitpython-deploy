@@ -9,7 +9,8 @@ use std::path::PathBuf;
 
 Features:
   • Automatic board detection and smart file filtering
-  • .cpdignore support with gitignore-style patterns  
+  • .cpdignore/.cpdforce support with gitignore-style patterns  
+  • Incremental sync (only copy changed files)
   • Backup functionality with progress tracking
   • Cross-platform support (Windows, macOS, Linux)
   • High-performance deployment with visual feedback
@@ -19,6 +20,7 @@ Examples:
   cpd --list-boards            Show all detected CircuitPython boards
   cpd --dry-run                Preview deployment without copying files
   cpd --backup ./backup        Create backup before deployment
+  cpd --incremental            Only copy files that have changed
   cpd --board /media/CIRCUITPY  Deploy to specific board path")]
 pub struct Cli {
     /// Path to the project directory to deploy (defaults to current directory)
@@ -52,6 +54,10 @@ pub struct Cli {
     /// List all detected CircuitPython boards and exit
     #[arg(short = 'l', long = "list-boards")]
     pub list_boards: bool,
+    
+    /// Only copy changed files (incremental sync)
+    #[arg(short = 'i', long = "incremental")]
+    pub incremental: bool,
 }
 
 impl Cli {
@@ -126,6 +132,7 @@ mod tests {
             force: false,
             assume_yes: false,
             list_boards: false,
+            incremental: false,
         };
 
         let current_dir = env::current_dir().unwrap();
@@ -144,6 +151,7 @@ mod tests {
             force: false,
             assume_yes: false,
             list_boards: false,
+            incremental: false,
         };
 
         assert_eq!(cli.project_dir(), test_path);

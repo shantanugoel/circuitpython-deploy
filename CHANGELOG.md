@@ -5,6 +5,26 @@ All notable changes to CircuitPython Deploy (cpd) will be documented in this fil
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2025-06-29
+
+### Added
+- 🎯 **Force include support** with `.cpdforce` files - Override ignore patterns to include specific files
+- ⚡ **Incremental sync** with `--incremental` flag - Only copy files that have changed (based on modification time and size)
+- 📊 **Enhanced change detection** - Smart comparison of source and destination files
+- 🔧 **Improved CLI** - New `--incremental` flag with updated help text and examples
+
+### Enhanced
+- Updated file filtering system to support both `.cpdignore` (exclude) and `.cpdforce` (force include) patterns
+- Added comprehensive sync module with file comparison capabilities  
+- Extended CLI help text to showcase new incremental sync feature
+- Updated README.md with detailed examples of force include and incremental sync usage
+
+### Testing
+- Added 4 new unit tests for sync module functionality
+- Added test for `.cpdforce` force include functionality
+- All 14 unit tests and 7 integration tests pass successfully
+- Manual testing confirms both features work correctly
+
 ## [0.1.2] - 2025-06-29
 
 ### Fixed

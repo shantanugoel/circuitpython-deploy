@@ -10,7 +10,7 @@ A fast, reliable command-line tool for deploying CircuitPython projects from you
 ## ✨ Features
 
 - 🔍 **Automatic board detection** - Finds CircuitPython boards automatically
-- 📁 **Smart file filtering** - Supports `.cpdignore` files with gitignore-style patterns
+- 📁 **Smart file filtering** - Supports `.cpdignore` and `.cpdforce` files with gitignore-style patterns
 - 💾 **Backup functionality** - Safely backup existing board contents before deployment
 - 📊 **Progress tracking** - Visual progress bars for file operations
 - 🚀 **High performance** - Deploy dozens of files in milliseconds
@@ -32,6 +32,9 @@ cpd --backup ./backup
 
 # Preview deployment (dry-run)
 cpd --dry-run
+
+# Only copy files that have changed (incremental sync)
+cpd --incremental
 
 # Deploy to specific board
 cpd --board /media/CIRCUITPY
@@ -125,6 +128,33 @@ backups/*
 *.tmp
 *.log
 ```
+
+### Force Include Files
+
+Create a `.cpdforce` file to include files that would normally be ignored:
+
+```gitignore
+# Force include specific configuration files
+settings.toml
+.env.production
+secrets.json
+```
+
+The `.cpdforce` file overrides any ignore patterns, allowing you to selectively include important files that might otherwise be filtered out by `.cpdignore` or `.gitignore`.
+
+### Incremental Sync
+
+Use the `--incremental` flag to only copy files that have changed:
+
+```bash
+# Only copy files that are newer or different
+cpd --incremental
+
+# Combine with dry-run to see what would be copied
+cpd --incremental --dry-run
+```
+
+This compares file modification times and sizes to determine what needs to be updated, making deployments much faster for large projects.
 
 ## 🏗️ Project Structure
 
